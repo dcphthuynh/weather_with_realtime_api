@@ -1,6 +1,6 @@
 # weather_with_realtime_api
 
-A new Flutter project.
+A Flutter application that get the weather at your current location or get the weather at any city in the world.
 
 ## Getting Started
 
