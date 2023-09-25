@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import '/utilities/constants.dart';
 
@@ -9,7 +7,7 @@ class CityScreen extends StatefulWidget {
 }
 
 class _CityScreenState extends State<CityScreen> {
-  String cityName;
+  late String cityName;
 
   @override
   Widget build(BuildContext context) {

@@ -13,10 +13,10 @@ class LocationScreen extends StatefulWidget {
 }
 
 class _LocationScreenState extends State<LocationScreen> {
-  int temperature;
-  String cityName;
-  String weatherIcon;
-  String weatherMsg;
+  late int temperature;
+  late String cityName;
+  late String weatherIcon;
+  late String weatherMsg;
   WeatherModel weather = WeatherModel();
 
   @override
@@ -85,7 +85,7 @@ class _LocationScreenState extends State<LocationScreen> {
                       if (typedText != null) {
                         var weatherData =
                             await weather.getCityWeather(typedText);
-                            updateUI(weatherData);
+                        updateUI(weatherData);
                       }
                       ;
                     },
