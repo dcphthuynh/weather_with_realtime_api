@@ -7,7 +7,7 @@ class CityScreen extends StatefulWidget {
 }
 
 class _CityScreenState extends State<CityScreen> {
-  late String cityName;
+  String? cityName;
 
   @override
   Widget build(BuildContext context) {
