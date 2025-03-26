@@ -1,37 +1,37 @@
-import '/screens/location_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '/services/weather.dart';
+import 'package:weather_with_realtime_api/blocs/weather_bloc.dart';
+import 'package:weather_with_realtime_api/blocs/weather_state.dart';
+import '../blocs/weather_event.dart';
+import 'location_screen.dart';
 
-class LoadingScreen extends StatefulWidget {
-  @override
-  _LoadingScreenState createState() => _LoadingScreenState();
-}
-
-class _LoadingScreenState extends State<LoadingScreen> {
-
-  @override
-  void initState() {
-    super.initState();
-    getLocation();
-  }
-
-  void getLocation() async {
-
-    var weatherData = await WeatherModel().getLocationWeather();
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return LocationScreen(locationWeather: weatherData);
-    }));
-  }
-
+class LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Dispatch event asynchronously to avoid build method issues
+    Future.microtask(
+        () => context.read<WeatherBloc>().add(FetchWeatherByLocation()));
+
     return Scaffold(
-        body: Center(
+      body: Center(
+        child: BlocListener<WeatherBloc, WeatherState>(
+          listener: (context, state) {
+            if (state is WeatherLoaded) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LocationScreen(),
+                ),
+              );
+            }
+          },
           child: SpinKitFadingCircle(
             color: Colors.white,
             size: 100.0,
+          ),
+        ),
       ),
-    ));
+    );
   }
 }

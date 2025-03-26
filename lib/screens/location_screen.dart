@@ -1,51 +1,13 @@
-import '/screens/city_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_with_realtime_api/blocs/weather_bloc.dart';
+import 'package:weather_with_realtime_api/blocs/weather_event.dart';
+import 'package:weather_with_realtime_api/blocs/weather_state.dart';
+import '/screens/city_screen.dart';
 import '/utilities/constants.dart';
-import '/services/weather.dart';
 
-class LocationScreen extends StatefulWidget {
-  final locationWeather;
-
-  LocationScreen({this.locationWeather});
-
+class LocationScreen extends StatelessWidget {
   @override
-  _LocationScreenState createState() => _LocationScreenState();
-}
-
-class _LocationScreenState extends State<LocationScreen> {
-  late int temperature;
-  late String cityName;
-  late String weatherIcon;
-  late String weatherMsg;
-  WeatherModel weather = WeatherModel();
-
-  @override
-  void initState() {
-    super.initState();
-
-    updateUI(widget.locationWeather);
-  }
-
-  void updateUI(dynamic weatherData) {
-    setState(() {
-      if (weatherData == null) {
-        temperature = 0;
-        weatherIcon = 'Error';
-        weatherMsg = 'Unable to get weather data';
-        cityName = '';
-        return;
-      }
-      double inDoubleTemperature = weatherData['main']['temp'];
-      temperature = inDoubleTemperature.toInt();
-
-      var condition = weatherData['weather'][0]['id'];
-      weatherIcon = weather.getWeatherIcon(condition);
-      weatherMsg = weather.getMessage(temperature);
-
-      cityName = weatherData['name'];
-    });
-  }
-
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
@@ -67,9 +29,8 @@ class _LocationScreenState extends State<LocationScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   TextButton(
-                    onPressed: () async {
-                      var weatherData = await weather.getLocationWeather();
-                      updateUI(weatherData);
+                    onPressed: () {
+                      context.read<WeatherBloc>().add(FetchWeatherByLocation());
                     },
                     child: Icon(
                       Icons.near_me,
@@ -78,16 +39,15 @@ class _LocationScreenState extends State<LocationScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
-                      var typedText = await Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return CityScreen();
-                      }));
+                      final typedText = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CityScreen()),
+                      );
                       if (typedText != null) {
-                        var weatherData =
-                            await weather.getCityWeather(typedText);
-                        updateUI(weatherData);
+                        context
+                            .read<WeatherBloc>()
+                            .add(FetchWeatherByCity(typedText));
                       }
-                      ;
                     },
                     child: Icon(
                       Icons.location_city,
@@ -96,31 +56,46 @@ class _LocationScreenState extends State<LocationScreen> {
                   ),
                 ],
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 15.0),
-                child: Row(
-                  children: <Widget>[
-                    Text(
-                      '$temperature°C',
-                      style: kTempTextStyle,
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    Text(
-                      weatherIcon,
-                      style: kConditionTextStyle,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(15.0),
-                child: Text(
-                  '$weatherMsg in $cityName',
-                  textAlign: TextAlign.right,
-                  style: kMessageTextStyle,
-                ),
+              BlocBuilder<WeatherBloc, WeatherState>(
+                builder: (context, state) {
+                  if (state is WeatherLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (state is WeatherLoaded) {
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(left: 15.0),
+                          child: Row(
+                            children: <Widget>[
+                              Text(
+                                '${state.temperature}°C',
+                                style: kTempTextStyle,
+                              ),
+                              SizedBox(width: 20),
+                              Text(
+                                state.weatherIcon,
+                                style: kConditionTextStyle,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(15.0),
+                          child: Text(
+                            '${state.weatherMessage} in ${state.cityName}',
+                            textAlign: TextAlign.right,
+                            style: kMessageTextStyle,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  if (state is WeatherError) {
+                    return Text(state.message);
+                  }
+                  return Container();
+                },
               ),
             ],
           ),
